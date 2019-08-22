@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/Android_Hackathon_2019-master" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/CurrentPlaceDetailsOnMap" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/MyApplication" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/New folder/MyApplication" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/PhotoGridApp" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/PopMoviesapp" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/firebaseauth" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/hack" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/sandwich-club-starter-code-master" vcs="Git" />
+  </component>
+</project>
