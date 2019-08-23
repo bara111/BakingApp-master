@@ -27,9 +27,14 @@ public class tabletRecipeStepsFragment extends Fragment {
     private GridLayoutManager gridLayoutManager;
     private RecycleViewStepsAdapter recycleViewStepsAdapter;
     OnImageClickListener mCallback;
+    private long distance;
+
+    public void setDistance(long distance) {
+        this.distance = distance;
+    }
 
     public interface OnImageClickListener {
-        void onImageSelected(int position);
+        void onImageSelected(int position,Long point);
     }
 
     @Override
@@ -67,7 +72,7 @@ public class tabletRecipeStepsFragment extends Fragment {
                 new RecyclerItemClickListener(getContext(), recyclerView, new RecyclerItemClickListener.OnItemClickListener() {
                     @Override
                     public void onItemClick(View view, int position) {
-                        mCallback.onImageSelected(position);
+                        mCallback.onImageSelected(position,distance);
 
 
                     }

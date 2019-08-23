@@ -50,6 +50,18 @@ public class tablet_step_ingredient_exoplayer_Activity extends AppCompatActivity
     private ArrayList<ingredients> ingredients;
     private Gson gson;
     private String name;
+    private boolean autoPlay = false;
+    public static final String READY = "Ready";
+
+    public static final String AUTOPLAY = "autoplay";
+    public static final String CURRENT_WINDOW_INDEX = "current_window_index";
+    public static final String PLAYBACK_POSITION = "playback_position";
+    private int currentWindow;
+    private long playbackPosition;
+    private boolean playWhenReady;
+    private String videoURL;
+    private Long Postion;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +89,7 @@ public class tablet_step_ingredient_exoplayer_Activity extends AppCompatActivity
 
             tabletRecipeStepsFragment recipeStepsFragment = new tabletRecipeStepsFragment();
             recipeStepsFragment.setSteps(steps);
+            recipeStepsFragment.setDistance(0);
 
             FragmentManager stepsFragmentManager = getSupportFragmentManager();
 
@@ -87,7 +100,14 @@ public class tablet_step_ingredient_exoplayer_Activity extends AppCompatActivity
 
         }
         else {
+            playbackPosition = savedInstanceState.getLong(PLAYBACK_POSITION, 0);
+            currentWindow = savedInstanceState.getInt(CURRENT_WINDOW_INDEX, 0);
+            autoPlay = savedInstanceState.getBoolean(AUTOPLAY, false);
+            playWhenReady = savedInstanceState.getBoolean(READY);
+            videoURL=savedInstanceState.getString("videoUrl");
+            intent = getIntent();
             name=intent.getStringExtra("name");
+            mFoodName.setText(name);
 
             exoPlayerView = findViewById(R.id.exo_player);
 
@@ -105,12 +125,14 @@ public class tablet_step_ingredient_exoplayer_Activity extends AppCompatActivity
 
             tabletRecipeStepsFragment recipeStepsFragment = new tabletRecipeStepsFragment();
             recipeStepsFragment.setSteps(steps);
-
+            recipeStepsFragment.setDistance(playbackPosition);
             FragmentManager stepsFragmentManager = getSupportFragmentManager();
 
             stepsFragmentManager.beginTransaction()
                     .add(R.id.steps, recipeStepsFragment)
                     .commit();
+            initializePlayer(videoURL, playbackPosition);
+
 
 
         }
@@ -119,11 +141,12 @@ public class tablet_step_ingredient_exoplayer_Activity extends AppCompatActivity
 
     }
     @Override
-    public void onImageSelected(int position) {
+    public void onImageSelected(int position,Long distance) {
         shortDescription.setText(steps.get(position).getShortDescription());
         releasePlayer();
         exoPlayerView.setVisibility(View.VISIBLE);
         findViewById(R.id.no_video_available).setVisibility(View.GONE);
+        videoURL=steps.get(position).getVideoURL();
         initializePlayer(steps.get(position).getVideoURL(), 0);
 
     }
@@ -131,19 +154,20 @@ public class tablet_step_ingredient_exoplayer_Activity extends AppCompatActivity
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putString("videoUrl",videoURL);
         outState.putParcelable(INTENT, intent);
         outState.putParcelableArrayList("steps",steps);
         outState.putParcelableArrayList("ingredients",ingredients);
+        outState.putLong(PLAYBACK_POSITION, playbackPosition);
+        outState.putInt(CURRENT_WINDOW_INDEX, currentWindow);
+        outState.putBoolean(AUTOPLAY, autoPlay);
+        outState.putBoolean(READY, playWhenReady);
 
 
     }
 
     private void initializePlayer(String video_url, long position) {
-        if (video_url.equals("")) {
-            exoPlayerView.setVisibility(View.GONE);
-            findViewById(R.id.no_video_available).setVisibility(View.VISIBLE);
-            return;
-        }
+
 
         if (mExoPlayer == null) {
 
@@ -168,6 +192,11 @@ public class tablet_step_ingredient_exoplayer_Activity extends AppCompatActivity
             mExoPlayer.setPlayWhenReady(false);
 
         }
+        else {
+            exoPlayerView.setVisibility(View.GONE);
+            findViewById(R.id.no_video_available).setVisibility(View.VISIBLE);
+            return;
+        }
 
     }
 
@@ -175,7 +204,9 @@ public class tablet_step_ingredient_exoplayer_Activity extends AppCompatActivity
     private void releasePlayer() {
 
         if (mExoPlayer != null) {
-            mExoPlayer.stop();
+            playbackPosition = mExoPlayer.getCurrentPosition();
+            currentWindow = mExoPlayer.getCurrentWindowIndex();
+            autoPlay = mExoPlayer.getPlayWhenReady();
             mExoPlayer.release();
             mExoPlayer = null;
         }
@@ -195,7 +226,12 @@ public class tablet_step_ingredient_exoplayer_Activity extends AppCompatActivity
     protected void onStop() {
         super.onStop();
         if (mExoPlayer != null) {
-            releasePlayer();
+            mExoPlayer.setPlayWhenReady(playWhenReady);
+            mExoPlayer.seekTo(playbackPosition);
+        } else {
+            initializePlayer(videoURL,playbackPosition);
+            mExoPlayer.setPlayWhenReady(playWhenReady);
+            mExoPlayer.seekTo(playbackPosition);
         }
     }
 

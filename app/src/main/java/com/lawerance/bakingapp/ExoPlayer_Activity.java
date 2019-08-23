@@ -32,6 +32,17 @@ public class ExoPlayer_Activity extends AppCompatActivity {
     private SimpleExoPlayerView exoPlayerView;
     private SimpleExoPlayer mExoPlayer;
     private Intent intent;
+    private boolean autoPlay = false;
+    public static final String READY = "Ready";
+
+    public static final String AUTOPLAY = "autoplay";
+    public static final String CURRENT_WINDOW_INDEX = "current_window_index";
+    public static final String PLAYBACK_POSITION = "playback_position";
+    private int currentWindow;
+    private long playbackPosition;
+    private boolean playWhenReady;
+    private String videoURL;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,17 +54,18 @@ public class ExoPlayer_Activity extends AppCompatActivity {
                 R.drawable.ic_launcher_background);
         exoPlayerView.setDefaultArtwork(icon);
 
-         intent = getIntent();
-        String thumbnailURL = intent.getStringExtra("thumbnailURL");
+        intent = getIntent();
         String shortDescription = intent.getStringExtra("shortDescription");
-        String videoURL = intent.getStringExtra("videoURL");
-        long position;
+        videoURL = intent.getStringExtra("videoURL");
+
         if (savedInstanceState != null) {
-            position = savedInstanceState.getLong("video-position", 0);
-            intent=savedInstanceState.getParcelable("intent");
-        }
-        else {
-            position = 0;
+            playbackPosition = savedInstanceState.getLong(PLAYBACK_POSITION, 0);
+            currentWindow = savedInstanceState.getInt(CURRENT_WINDOW_INDEX, 0);
+            autoPlay = savedInstanceState.getBoolean(AUTOPLAY, false);
+            playWhenReady = savedInstanceState.getBoolean(READY);
+
+        } else {
+            playbackPosition = 0;
             intent = getIntent();
         }
         ShortDescriptionFragment shortDescriptionFragment = new ShortDescriptionFragment();
@@ -64,20 +76,25 @@ public class ExoPlayer_Activity extends AppCompatActivity {
         shortDescriptionFragmentManager.beginTransaction()
                 .add(R.id.fl_description, shortDescriptionFragment)
                 .commit();
-        initializePlayer(videoURL, position);
+        initializePlayer(videoURL);
 
 
     }
+
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putParcelable("intent",intent);
-        if(mExoPlayer!=null)
-            outState.putLong("video-position", mExoPlayer.getCurrentPosition());
+        outState.putParcelable("intent", intent);
+        outState.putLong(PLAYBACK_POSITION, playbackPosition);
+        outState.putInt(CURRENT_WINDOW_INDEX, currentWindow);
+        outState.putBoolean(AUTOPLAY, autoPlay);
+        outState.putBoolean(READY, playWhenReady);
+
 
     }
-    private void initializePlayer(String video_url, long position) {
-        if(video_url.equals("")){
+
+    private void initializePlayer(String video_url) {
+        if (video_url.equals("")) {
             exoPlayerView.setVisibility(View.GONE);
             findViewById(R.id.no_video_available).setVisibility(View.VISIBLE);
             return;
@@ -91,7 +108,7 @@ public class ExoPlayer_Activity extends AppCompatActivity {
 
             mExoPlayer = ExoPlayerFactory.newSimpleInstance(this, trackSelector, loadControl);
 
-            mExoPlayer.seekTo(position);
+            mExoPlayer.seekTo(currentWindow, playbackPosition);
             exoPlayerView.setPlayer(mExoPlayer);
 
             String userAgent = Util.getUserAgent(this, "BakingApp");
@@ -110,11 +127,12 @@ public class ExoPlayer_Activity extends AppCompatActivity {
     }
 
 
-
     private void releasePlayer() {
 
         if (mExoPlayer != null) {
-            mExoPlayer.stop();
+            playbackPosition = mExoPlayer.getCurrentPosition();
+            currentWindow = mExoPlayer.getCurrentWindowIndex();
+            autoPlay = mExoPlayer.getPlayWhenReady();
             mExoPlayer.release();
             mExoPlayer = null;
         }
@@ -124,32 +142,29 @@ public class ExoPlayer_Activity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if(mExoPlayer!=null){
+        if (mExoPlayer != null) {
             mExoPlayer.setPlayWhenReady(false);
             releasePlayer();
         }
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-        if(mExoPlayer!=null){
-            releasePlayer();
-        }
-    }
-
-    @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
-        if(mExoPlayer!=null){
-            mExoPlayer.setPlayWhenReady(true);
+        if (mExoPlayer != null) {
+            mExoPlayer.setPlayWhenReady(playWhenReady);
+            mExoPlayer.seekTo(playbackPosition);
+        } else {
+            initializePlayer(videoURL);
+            mExoPlayer.setPlayWhenReady(playWhenReady);
+            mExoPlayer.seekTo(playbackPosition);
         }
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        if(mExoPlayer!=null)
+        if (mExoPlayer != null)
             mExoPlayer.setPlayWhenReady(true);
     }
 
@@ -158,4 +173,5 @@ public class ExoPlayer_Activity extends AppCompatActivity {
         super.onDestroy();
         releasePlayer();
     }
+
 }
